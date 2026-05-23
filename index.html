@@ -25,7 +25,11 @@
                 </svg>
                 <h1>HD엑셀커스텀 <span style="font-size: 30%; font-weight: 500; opacity: 0.85; margin-left: 8px; font-family: 'Inter', sans-serif; vertical-align: middle; background: none; -webkit-text-fill-color: #c084fc; color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.6); display: inline-block;">by정종현</span></h1>
             </div>
-            <p class="subtitle">업무 시간을 획기적으로 단축시켜줄 강력한 기능 제공 &nbsp;|&nbsp; <a href="manual.html" target="_blank" class="manual-link">📖 사용법 가이드 바로가기</a></p>
+            <p class="subtitle">
+                업무 시간을 획기적으로 단축시켜줄 강력한 기능 제공 &nbsp;|&nbsp; 
+                <a href="manual.html" target="_blank" class="manual-link">📖 사용법 가이드 바로가기</a> &nbsp;|&nbsp; 
+                <a href="#" id="download-source-link" class="manual-link" style="color: var(--success); text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); display: inline-block;">💾 오프라인 버전 다운로드(ZIP)</a>
+            </p>
         </header>
 
         <main class="main-content">
@@ -200,5 +204,21 @@
     <div id="toast" class="toast">알림 메시지</div>
 
     <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hostname = window.location.hostname;
+            const pathname = window.location.pathname;
+            if (hostname.endsWith('.github.io')) {
+                const username = hostname.split('.')[0];
+                const repoName = pathname.split('/')[1];
+                const downloadUrl = `https://github.com/${username}/${repoName}/archive/refs/heads/main.zip`;
+                const downloadLink = document.getElementById('download-source-link');
+                if (downloadLink) {
+                    downloadLink.href = downloadUrl;
+                    downloadLink.style.display = 'inline-block';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
