@@ -569,12 +569,23 @@ function processFiles() {
                     }
                     isFirstFile = false;
                 } else {
-                    // 두 번째 이후 파일의 헤더 중 새로운 것이 있으면 누적 추가
-                    headers.forEach(h => {
-                        if (!rawHeaders.includes(h)) {
-                            rawHeaders.push(h);
+                    // 두 번째 이후 파일의 열 개수가 더 많으면 새로운 고유 헤더 이름을 추가하여 확장
+                    const headerStartIndex = rawHeaders.includes("[원본 파일명]") ? 1 : 0;
+                    const currentHeadersCount = rawHeaders.length - headerStartIndex;
+                    
+                    if (headers.length > currentHeadersCount) {
+                        for (let i = currentHeadersCount; i < headers.length; i++) {
+                            let name = headers[i];
+                            if (rawHeaders.includes(name)) {
+                                let count = 1;
+                                while (rawHeaders.includes(`${name}_${count}`)) {
+                                    count++;
+                                }
+                                name = `${name}_${count}`;
+                            }
+                            rawHeaders.push(name);
                         }
-                    });
+                    }
                 }
                 
                 const fileData = aoa.slice(1)
@@ -585,9 +596,12 @@ function processFiles() {
                             obj["[원본 파일명]"] = f.name; // 각 행에 파일명 삽입
                         }
                         
-                        // 현재 파일의 헤더를 기준으로 값 매핑
-                        headers.forEach((h, idx) => {
-                            obj[h] = row[idx] !== undefined ? row[idx] : "";
+                        // 열 인덱스(순서) 기준으로 첫 파일의 헤더명 매핑
+                        const headerStartIndex = rawHeaders.includes("[원본 파일명]") ? 1 : 0;
+                        rawHeaders.forEach((h, rawIdx) => {
+                            if (h === "[원본 파일명]") return;
+                            const dataColIdx = rawIdx - headerStartIndex;
+                            obj[h] = row[dataColIdx] !== undefined ? row[dataColIdx] : "";
                         });
                         
                         obj._id = globalDataId++; // 행 고유 식별자 추가
@@ -1162,7 +1176,21 @@ function updatePreview() {
     
     headers.forEach(header => {
         const th = document.createElement('th');
-        th.textContent = header;
+        
+        // 원본 파일의 열 알파벳(A, B, C...) 구해서 매핑 (원본 파일명 열은 제외)
+        const rawHeadersOnly = rawHeaders.filter(h => h !== "[원본 파일명]");
+        const origIdx = rawHeadersOnly.indexOf(header);
+        
+        if (origIdx !== -1 && header !== "[원본 파일명]") {
+            const colLetter = XLSX.utils.encode_col(origIdx);
+            if (colLetter === header) {
+                th.textContent = colLetter;
+            } else {
+                th.textContent = `${colLetter} (${header})`;
+            }
+        } else {
+            th.textContent = header;
+        }
         trHead.appendChild(th);
     });
     previewThead.appendChild(trHead);
