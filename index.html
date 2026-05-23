@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HD엑셀커스텀 by정종현</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS (엑셀 파싱 라이브러리) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 13H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M8 17H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h1>HD엑셀커스텀 <span style="font-size: 30%; font-weight: 500; opacity: 0.85; margin-left: 8px; font-family: 'Inter', sans-serif; vertical-align: middle; background: none; -webkit-text-fill-color: #c084fc; color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.6); display: inline-block;">by정종현</span></h1>
+            </div>
+            <p class="subtitle">업무 시간을 획기적으로 단축시켜줄 강력한 기능 제공 &nbsp;|&nbsp; <a href="manual.html" target="_blank" class="manual-link">📖 사용법 가이드 바로가기</a></p>
+        </header>
+
+        <main class="main-content">
+            <!-- 파일 업로드 섹션 -->
+            <section class="card upload-section" id="upload-section">
+                <div class="file-drop-area" id="drop-area">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="upload-icon">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <h3>엑셀 파일 업로드</h3>
+                    <p>하나 이상의 파일을 여기에 끌어다 놓으세요. 파일을 커스텀 또는 병합도 가능</p>
+                    <!-- multiple 속성 추가 -->
+                    <input type="file" id="file-input" accept=".xlsx, .xls, .csv" multiple hidden>
+                    <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">파일 여러 개 선택 가능</button>
+                </div>
+            </section>
+
+            <!-- 작업 공간 (파일 업로드 후 표시됨) -->
+            <div id="workspace" class="workspace hidden">
+                <div class="sidebar">
+                    
+                    <div class="sidebar-header">
+                        <h2>데이터 설정</h2>
+                        <button id="add-more-files-btn" class="btn btn-outline btn-sm">추가 업로드</button>
+                    </div>
+
+                    <!-- 1. 시트 선택 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">1. 파일 & 시트</h3>
+                        <div class="accordion-content">
+                            <div id="uploaded-files-list" class="file-list"></div>
+                            <small class="hint">여러 파일을 올렸을 경우, 첫 번째 파일의 시트를 기준으로 병합됩니다.</small>
+                        </div>
+                    </section>
+
+                    <!-- 2. 열(Column) 선택 및 순서 변경 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">2. 열 선택 및 순서 변경</h3>
+                        <div class="accordion-content">
+                            <small class="hint mb-2">항목을 위아래로 끌어서 순서를 변경할 수 있습니다.</small>
+                            <div class="columns-list" id="columns-list">
+                                <!-- JS로 동적 생성 (드래그 가능) -->
+                            </div>
+                            <div class="column-actions">
+                                <button class="btn btn-outline btn-sm" id="select-all-btn">모두 선택</button>
+                                <button class="btn btn-outline btn-sm" id="deselect-all-btn">모두 해제</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 3. 데이터 필터링 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">3. 조건 필터 (검색)</h3>
+                        <div class="accordion-content">
+                            <div id="filters-container">
+                                <!-- 필터 항목이 여기에 추가됨 -->
+                            </div>
+                            <button id="add-filter-btn" class="btn btn-outline btn-sm w-100">+ 조건 추가</button>
+                        </div>
+                    </section>
+
+                    <!-- 4. 정렬 및 중복 제거 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">4. 정렬 및 중복 제거</h3>
+                        <div class="accordion-content">
+                            <div class="dup-control mb-4" style="border-bottom: 1px dashed var(--border); padding-bottom: 0.75rem;">
+                                <p class="mb-2" style="font-size: 0.9rem; font-weight: 500;">선택한 열 기준 중복 데이터 제거</p>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button id="apply-dup-btn" class="btn btn-sm btn-primary" style="flex:1;">확인(적용)</button>
+                                    <button id="cancel-dup-btn" class="btn btn-sm btn-outline" style="flex:1;">적용 취소</button>
+                                </div>
+                                <small id="dup-status" class="hint mt-2" style="color: var(--text-muted)">상태: 미적용</small>
+                            </div>
+
+                            <div class="sort-controls">
+                                <p class="mb-1" style="font-size: 0.9rem; font-weight: 500;">데이터 정렬</p>
+                                <select id="sort-column" class="select-input">
+                                    <option value="">정렬 안함</option>
+                                </select>
+                                <select id="sort-order" class="select-input mt-2">
+                                    <option value="asc">오름차순 (가나다, 1~10)</option>
+                                    <option value="desc">내림차순 (하파타, 10~1)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 5. 데이터 형식 통일 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">5. 지정 열 서식 / 문자 추가 및 삭제</h3>
+                        <div class="accordion-content">
+                            <div id="formats-container">
+                                <!-- 서식 규칙 항목이 여기에 추가됨 -->
+                            </div>
+                            <button id="add-format-btn" class="btn btn-outline btn-sm mt-2 w-100">+ 서식/문자 규칙 추가</button>
+                        </div>
+                    </section>
+
+                    <!-- 6. 통계 및 요약 추가 -->
+                    <section class="control-group">
+                        <h3 class="accordion-header">6. 통계 및 요약 추가</h3>
+                        <div class="accordion-content">
+                            <!-- 세로 요약 (기존) -->
+                            <div class="mb-4" style="border-bottom: 1px dashed var(--border); padding-bottom: 0.75rem;">
+                                <p class="mb-2" style="font-size: 0.9rem; font-weight: 500;">[세로/열 하단 요약] 데이터 맨 아래 추가</p>
+                                <select id="summary-column" class="select-input mb-2">
+                                    <option value="">요약할 열 선택 안함</option>
+                                </select>
+                                <select id="summary-type" class="select-input">
+                                    <option value="sum">합계 구하기</option>
+                                    <option value="avg">평균 구하기</option>
+                                    <option value="count">데이터 개수(건수) 세기</option>
+                                </select>
+                                <input type="text" id="summary-count-val" class="text-input mt-2 hidden" placeholder="셀 특정 값 입력 (비워두면 전체 개수)">
+                            </div>
+                            
+                            <!-- 가로 요약 (신규) -->
+                            <div>
+                                <p class="mb-2" style="font-size: 0.9rem; font-weight: 500;">[가로/행 우측 요약] 데이터 맨 우측 열 추가</p>
+                                <div id="rs-container"></div>
+                                <button id="add-rs-btn" class="btn btn-outline btn-sm mt-2 w-100">+ 가로 통계 열 추가</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 다운로드 버튼 -->
+                    <div class="action-panel mt-4">
+                        <button id="download-btn" class="btn btn-success btn-large">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            최종 결과 다운로드
+                        </button>
+                        <button id="reset-btn" class="btn btn-text">초기화 및 처음으로</button>
+                    </div>
+                </div>
+
+                <div class="preview-area">
+                    <div class="preview-header">
+                        <h3>데이터 처리 미리보기 <span class="processing-status" id="processing-status">완료</span></h3>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button id="undo-btn" class="btn btn-outline btn-sm" style="color: var(--primary); border-color: rgba(0, 242, 254, 0.3); padding: 0.25rem 0.6rem; font-size: 0.8rem;" title="이전 작업 되돌리기 (Ctrl + Z)" disabled>실행 취소 (되돌리기)</button>
+                            <button id="delete-selected-rows-btn" class="btn btn-outline btn-sm" style="color: var(--danger); border-color: rgba(244, 63, 94, 0.3); padding: 0.25rem 0.6rem; font-size: 0.8rem;" title="선택한 셀의 행 전체 삭제">선택 행 삭제</button>
+                            <span class="row-count" id="row-count">0 rows</span>
+                        </div>
+                    </div>
+                    <!-- 추가된 위쪽 스크롤바 -->
+                    <div id="top-scroll-container" class="top-scroll-container">
+                        <div id="top-scroll-dummy"></div>
+                    </div>
+                    <div class="preview-body" style="display: flex; flex-grow: 1; overflow: hidden; position: relative;">
+                        <div class="table-container" id="table-container">
+                            <table id="preview-table">
+                                <thead id="preview-thead"></thead>
+                                <tbody id="preview-tbody"></tbody>
+                            </table>
+                            <div id="empty-preview" class="empty-state hidden">
+                                <p>표시할 데이터가 없습니다. (조건 필터를 확인해주세요)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">알림 메시지</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
